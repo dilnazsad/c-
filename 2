@@ -7,42 +7,51 @@ class MainClass
     static int ID = 1;
     static List<Person> people = new List<Person>();
 
-    Action action = Action.Add;
+    public record Person(int ID, string FirstName, string LastName);
 
-    public static void Main(string[] args)
-    {
-        void Action(Choice choice)
-        {
-            while (true)
-            {
-                switch (choice)
-                {
-                    case Choice.Add:
-                        Add();
-                        break;
-                    case "Edit":
-                        Edit();
-                        break;
-                    case "Remove":
-                        Remove();
-                        break;
-                    case "List":
-                        List();
-                        break;
-                    case "Exit":
-                        return;
-                }
-            }
-        }
-    }
-        enum Choice
+    static int ID = 1;
+    static List<Person> people = new List<Person>();
+
+    public enum Choice
     {
         Add,
         Edit,
         Remove,
-        List
+        List,
+        Exit
     };
-}
+
+    public static void Main(string[] args)
+    {
+        while (true)
+        {
+            Console.WriteLine("Enter your choice (Add, Edit, Remove, List, Exit):");
+            string userChoice = Console.ReadLine();
+            Choice choice;
+            if (!Enum.TryParse(userChoice, true, out choice))
+            {
+                Console.WriteLine("Invalid choice entered. Please try again.");
+                continue;
+            }
+
+            switch (choice)
+            {
+                case Choice.Add:
+                    Add();
+                    break;
+                case Choice.Edit:
+                    Edit();
+                    break;
+                case Choice.Remove:
+                    Remove();
+                    break;
+                case Choice.List:
+                    List();
+                    break;
+                case Choice.Exit:
+                    return;
+            }
+        }
 
 
     static void Add()
