@@ -28,11 +28,6 @@ class MainClass
             Console.WriteLine("Enter your choice (Add, Edit, Remove, List, Exit):");
             string userChoice = Console.ReadLine();
             Choice choice;
-            if (!Enum.TryParse(userChoice, true, out choice))
-            {
-                Console.WriteLine("Invalid choice entered. Please try again.");
-                continue;
-            }
 
             switch (choice)
             {
