@@ -38,6 +38,11 @@ class MainClass
                 continue;
             }
 
+            else if (inputs.Length != choicemap[choice])
+            {
+                Console.WriteLine("Invalid Input.");
+            }
+
             else
             {
 
@@ -57,11 +62,6 @@ class MainClass
                         break;
                     case Choice.Exit:
                         return;
-                }
-
-                if(inputs.Length != choicemap[choice])
-                {
-                    Console.WriteLine("Invalid Input.");
                 }
             }
         }
