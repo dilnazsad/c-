@@ -9,6 +9,15 @@ class MainClass
         Exit
     }
 
+    static Dictionary<Choice, int> choicemap = new Dictionary<Choice, int>()
+    {
+        { Choice.Add, 3 },
+        { Choice.Edit, 4 },
+        { Choice.Remove, 2 },
+        { Choice.List, 1 },
+        { Choice.Exit, 1 }
+    };
+
     public record Person(int ID, string FirstName, string LastName);
 
     static int ID = 1;
@@ -23,7 +32,7 @@ class MainClass
             string[] inputs = input.Split(' ');
             Choice choice;
 
-            if (!Enum.TryParse(inputs[0], true, out choice))
+            if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
             {
                 Console.WriteLine("Invalid choice. Please enter a valid choice.");
                 continue;
@@ -49,6 +58,11 @@ class MainClass
                     case Choice.Exit:
                         return;
                 }
+
+                if(inputs.Length != choicemap[choice])
+                {
+                    Console.WriteLine("Invalid Input.");
+                }
             }
         }
     }
@@ -67,7 +81,7 @@ class MainClass
 
         if (person == null)
         {
-            Console.WriteLine("No person founded with ID" + id);
+            Console.WriteLine("No person founded with ID " + id);
             return;
         };
 
@@ -87,7 +101,7 @@ class MainClass
 
         if (person == null)
         {
-            Console.WriteLine("No person founded with ID" + id);
+            Console.WriteLine("No person founded with ID " + id);
         };
 
         people.Remove(person);
