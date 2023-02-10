@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 class MainClass
 {
     public enum Choice
@@ -21,33 +18,37 @@ class MainClass
     {
         while (true)
         {
-            Console.WriteLine("Enter the action you want to perform (Add, Edit, Remove, List, Exit): ");
+            Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, List, Exit): ");
             string input = Console.ReadLine();
-            string[] inputs = input.Split(" ");
+            string[] inputs = input.Split(' ');
             Choice choice;
-            
+
             if (!Enum.TryParse(inputs[0], true, out choice))
             {
                 Console.WriteLine("Invalid choice. Please enter a valid choice.");
                 continue;
             }
 
-            switch (choice)
+            else
             {
-                case Choice.Add:
-                    Add(inputs[1], inputs[2]);
-                    break;
-                case Choice.Edit:
-                    Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
-                    break;
-                case Choice.Remove:
-                    Remove(Convert.ToInt32(inputs[1]));
-                    break;
-                case Choice.List:
-                    List();
-                    break;
-                case Choice.Exit:
-                    return;
+
+                switch (choice)
+                {
+                    case Choice.Add:
+                        Add(inputs[1], inputs[2]);
+                        break;
+                    case Choice.Edit:
+                        Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
+                        break;
+                    case Choice.Remove:
+                        Remove(Convert.ToInt32(inputs[1]));
+                        break;
+                    case Choice.List:
+                        List();
+                        break;
+                    case Choice.Exit:
+                        return;
+                }
             }
         }
     }
@@ -64,8 +65,15 @@ class MainClass
     {
         Person person = people.Find(p => p.ID == id);
 
+        if (person == null)
+        {
+            Console.WriteLine("No person founded with ID" + id);
+            return;
+        };
+
         int index = people.IndexOf(person);
-        people[index] = person with {
+        people[index] = person with
+        {
             FirstName = newFirstName,
             LastName = newLastName
         };
@@ -76,6 +84,11 @@ class MainClass
     static void Remove(int id)
     {
         Person person = people.Find(p => p.ID == id);
+
+        if (person == null)
+        {
+            Console.WriteLine("No person founded with ID" + id);
+        };
 
         people.Remove(person);
 
