@@ -24,6 +24,13 @@ class MainClass
             Console.WriteLine("Enter the action you want to perform (Add, Edit, Remove, List, Exit): ");
             string input = Console.ReadLine();
             string[] inputs = input.Split(" ");
+            Choice choice;
+            
+            if (!Enum.TryParse(inputs[0], true, out choice))
+            {
+                Console.WriteLine("Invalid choice. Please enter a valid choice.");
+                continue;
+            }
 
             switch (choice)
             {
