@@ -1,21 +1,52 @@
-using (FileStream fs = new FileStream("active.json", FileMode.OpenOrCreate))
-                        {
-                            string active = JsonSerializer.Serialize(ActiveList);
-                            Console.WriteLine("\n" + active);
-                            List<Person> deserializedList = JsonSerializer.Deserialize<List<Person>>(active);
-                            foreach (Person person in deserializedList)
-                            {
-                                Console.WriteLine(person);
-                            }
-                        }
+    if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
+    {
+        Console.WriteLine("Invalid choice. Please enter a valid choice.");
+        continue;
+    }
 
-                        using (FileStream fs = new FileStream("removed.json", FileMode.OpenOrCreate))
-                        {
-                            string removed = JsonSerializer.Serialize(RemovedList);
-                            Console.WriteLine("\n" + removed);
-                            List<Person> deserializedList1 = JsonSerializer.Deserialize<List<Person>>(removed);
-                            foreach (Person person in deserializedList1)
-                            {
-                                Console.WriteLine(person);
-							}
-                        }
+    else if (inputs.Length != choicemap[choice])
+    {
+        Console.WriteLine("Invalid Input.");
+    }
+
+    else
+    {
+
+        switch (choice)
+        {
+            case Choice.Add:
+                Add(inputs[1], inputs[2]);
+                break;
+            case Choice.Edit:
+                Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
+                break;
+            case Choice.Remove:
+                Remove(Convert.ToInt32(inputs[1]));
+                break;
+            case Choice.Recovery:
+                Recovery(Convert.ToInt32(inputs[1]));
+                break;
+            case Choice.List:
+                List();
+                break;
+            case Choice.Exit:
+                using (FileStream fs = new FileStream("active.json", FileMode.OpenOrCreate))
+                {
+                    using (Utf8JsonWriter writer = new Utf8JsonWriter(fs))
+                    {
+                        JsonSerializer.Serialize(writer, ActiveList);
+                    }
+                }
+
+                using (FileStream fs = new FileStream("removed.json", FileMode.OpenOrCreate))
+                {
+                    using (Utf8JsonWriter writer = new Utf8JsonWriter(fs))
+                    {
+                        JsonSerializer.Serialize(writer, RemovedList);
+                    }
+                }
+
+                return;
+        }
+    }
+}
