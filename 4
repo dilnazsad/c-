@@ -1,0 +1,21 @@
+using (FileStream fs = new FileStream("active.json", FileMode.OpenOrCreate))
+                        {
+                            string active = JsonSerializer.Serialize(ActiveList);
+                            Console.WriteLine("\n" + active);
+                            List<Person> deserializedList = JsonSerializer.Deserialize<List<Person>>(active);
+                            foreach (Person person in deserializedList)
+                            {
+                                Console.WriteLine(person);
+                            }
+                        }
+
+                        using (FileStream fs = new FileStream("removed.json", FileMode.OpenOrCreate))
+                        {
+                            string removed = JsonSerializer.Serialize(RemovedList);
+                            Console.WriteLine("\n" + removed);
+                            List<Person> deserializedList1 = JsonSerializer.Deserialize<List<Person>>(removed);
+                            foreach (Person person in deserializedList1)
+                            {
+                                Console.WriteLine(person);
+							}
+                        }
