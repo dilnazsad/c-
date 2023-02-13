@@ -1,120 +1,85 @@
-class MainClass
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+
+public enum Choice
 {
-    public enum Choice
-    {
-        Add,
-        Edit,
-        Remove,
-        List,
-        Exit
-    }
+	Add,
+	Edit,
+	Remove,
+	Recovery,
+	List,
+	Exit
+}
 
-    static Dictionary<Choice, int> choicemap = new Dictionary<Choice, int>()
-    {
-        { Choice.Add, 3 },
-        { Choice.Edit, 4 },
-        { Choice.Remove, 2 },
-        { Choice.List, 1 },
-        { Choice.Exit, 1 }
-    };
+static Dictionary<Choice, int> choicemap = new Dictionary<Choice, int>()
+{
+	{ Choice.Add, 3 },
+	{ Choice.Edit, 4 },
+	{ Choice.Remove, 2 },
+	{ Choice.Recovery, 2 },
+	{ Choice.List, 1 },
+	{ Choice.Exit, 1 }
+};
 
-    public record Person(int ID, string FirstName, string LastName);
+public record Person(int ID, string FirstName, string LastName);
 
-    static int ID = 1;
-    static List<Person> people = new List<Person>();
+static int ID = 1;
+static List<Person> ActiveList = new List<Person>();
+static List<Person> RemovedList= new List<Person>();
 
-    public static void Main(string[] args)
-    {
-        while (true)
-        {
-            Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, List, Exit): ");
-            string input = Console.ReadLine();
-            string[] inputs = input.Split(' ');
-            Choice choice;
+public static void Main(string[] args)
+{
 
-            if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
-            {
-                Console.WriteLine("Invalid choice. Please enter a valid choice.");
-                continue;
-            }
+	while (true)
+	{
+		Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, Recovery, List, Exit): ");
+		string input = Console.ReadLine();
+		string[] inputs = input.Split(' ');
+		Choice choice;
 
-            else if (inputs.Length != choicemap[choice])
-            {
-                Console.WriteLine("Invalid Input.");
-            }
+		if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
+		{
+			Console.WriteLine("Invalid choice. Please enter a valid choice.");
+			continue;
+		}
 
-            else
-            {
+		else if (inputs.Length != choicemap[choice])
+		{
+			Console.WriteLine("Invalid Input.");
+		}
 
-                switch (choice)
-                {
-                    case Choice.Add:
-                        Add(inputs[1], inputs[2]);
-                        break;
-                    case Choice.Edit:
-                        Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
-                        break;
-                    case Choice.Remove:
-                        Remove(Convert.ToInt32(inputs[1]));
-                        break;
-                    case Choice.List:
-                        List();
-                        break;
-                    case Choice.Exit:
-                        return;
-                }
-            }
-        }
-    }
+		else
+		{
 
-    static void Add(string firstName, string lastName)
-    {
-        Person user = new Person(ID++, firstName, lastName);
-        people.Add(user);
+			switch (choice)
+			{
+				case Choice.Add:
+					Add(inputs[1], inputs[2]);
+					break;
+				case Choice.Edit:
+					Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
+					break;
+				case Choice.Remove:
+					Remove(Convert.ToInt32(inputs[1]));
+					break;
+				case Choice.Recovery:
+					Recovery(Convert.ToInt32(inputs[1]));
+					break;
+				case Choice.List:
+					List();
+					break;
+				case Choice.Exit:
+					string json = JsonSerializer.Serialize(ActiveList);
+					Console.WriteLine(json);
+					List<Person> deserializedList = JsonSerializer.Deserialize<List<Person>>(json);
+					foreach (Person person in deserializedList)
+					{
+						Console.WriteLine(person);
+					}
 
-        Console.WriteLine("\nPerson added successfully\n");
-    }
-
-    static void Edit(int id, string newFirstName, string newLastName)
-    {
-        Person person = people.Find(p => p.ID == id);
-
-        if (person == null)
-        {
-            Console.WriteLine("No person founded with ID " + id);
-            return;
-        };
-
-        int index = people.IndexOf(person);
-        people[index] = person with
-        {
-            FirstName = newFirstName,
-            LastName = newLastName
-        };
-
-        Console.WriteLine("\nPerson edited successfully\n");
-    }
-
-    static void Remove(int id)
-    {
-        Person person = people.Find(p => p.ID == id);
-
-        if (person == null)
-        {
-            Console.WriteLine("No person founded with ID " + id);
-        };
-
-        people.Remove(person);
-
-        Console.WriteLine("\nPerson removed successfully\n");
-    }
-
-    static void List()
-    {
-        Console.WriteLine("\nId\tFirst Name\tLast Name");
-        foreach (var person in people)
-        {
-            Console.WriteLine("\n" + person.ID + "\t" + person.FirstName + "\t\t" + person.LastName);
-        }
-    }
+					return;
+			}
+		}
+	}
 }
