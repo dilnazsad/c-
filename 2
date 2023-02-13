@@ -1,8 +1,25 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using System.Text.Json;
+using static MainClass;
+
+static void SaveAsJson(string fileName, List<Person> list)
+{
+    using (FileStream fs = File.Create(fileName))
+    {
+        byte[] data = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(list));
+        fs.Write(data, 0, data.Length);
+    }
+}
+static List<Person> LoadFromJson(string fileName)
+{
+    using (FileStream fs = File.OpenRead(fileName))
+    {
+        byte[] data = new byte[fs.Length];
+        fs.Read(data, 0, data.Length);
+        return JsonSerializer.Deserialize<List<Person>>(Encoding.UTF8.GetString(data));
+    }
+}
+
 
 class MainClass
 {
@@ -32,71 +49,156 @@ class MainClass
     static List<Person> ActiveList = new List<Person>();
     static List<Person> RemovedList = new List<Person>();
 
-    static void SaveAsJson(string fileName, List<Person> list)
+    public static void Main(string[] args)
     {
-        using (FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate))
+        ActiveList = LoadFromJson("active.json") ?? new List<Person>();
+        RemovedList = LoadFromJson("removed.json") ?? new List<Person>();
+
+        while (true)
         {
-            string json = JsonSerializer.Serialize(list);
-            Console.WriteLine("\n" + json);
-            List<Person> deserializedList = JsonSerializer.Deserialize<List<Person>>(json);
-            foreach (Person person in deserializedList)
+            Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, Recovery, List, Exit): ");
+            string input = Console.ReadLine();
+            string[] inputs = input.Split(' ');
+            Choice choice;
+
+            if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
             {
-                Console.WriteLine(person);
+                Console.WriteLine("Invalid choice. Please enter a valid choice.");
+                continue;
             }
-        }
-    }
 
-    static List<Person> LoadFromJson(string fileName)
-    {
-        if (!File.Exists(fileName))
-        {
-            return null;
-        }
+            else if (inputs.Length != choicemap[choice])
+            {
+                Console.WriteLine("Invalid Input.");
+            }
 
-        using (FileStream fs = File.OpenRead(fileName))
-        {
-            byte[] data = new byte[fs.Length];
-            fs.Read(data, 0, data.Length);
-            return JsonSerializer.Deserialize<List<Person>>(Encoding.UTF8.GetString(data));
+            else
+            {
+
+                switch (choice)
+                {
+                    case Choice.Add:
+                        Add(inputs[1], inputs[2]);
+                        break;
+                    case Choice.Edit:
+                        Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
+                        break;
+                    case Choice.Remove:
+                        Remove(Convert.ToInt32(inputs[1]));
+                        break;
+                    case Choice.Recovery:
+                        Recovery(Convert.ToInt32(inputs[1]));
+                        break;
+                    case Choice.List:
+                        List();
+                        break;
+                    case Choice.Exit:
+                        SaveAsJson("active.json", ActiveList);
+                        SaveAsJson("removed.json", RemovedList);
+                        return; ;
+                }
+            }
         }
     }
 
     static void Add(string firstName, string lastName)
     {
-        ActiveList.Add(new Person(ID, firstName, lastName));
-        ID++;
+        Person user = new Person(ID++, firstName, lastName);
+        ActiveList.Add(user);
+
+        Console.WriteLine("\nPerson added successfully\n");
     }
 
-    static void Edit(int id, string firstName, string lastName)
+    static void Edit(int id, string newFirstName, string newLastName)
     {
-        var person = ActiveList.Find(x => x.ID == id);
+        Person person = ActiveList.Find(p => p.ID == id);
+
         if (person == null)
         {
-            Console.WriteLine("Person not found");
+            Console.WriteLine("No person founded with ID " + id);
             return;
-        }
+        };
 
         int index = ActiveList.IndexOf(person);
-        ActiveList[index] = new Person(person.ID, firstName, lastName);
+        ActiveList[index] = person with
+        {
+            FirstName = newFirstName,
+            LastName = newLastName
+        };
+
+        Console.WriteLine("\nPerson edited successfully\n");
     }
 
     static void Remove(int id)
     {
-        var person = ActiveList.Find(x => x.ID == id);
+        Person person = ActiveList.Find(p => p.ID == id);
+
         if (person == null)
         {
-            Console.WriteLine("Person not found");
-            return;
-        }
+            Console.WriteLine("No person founded with ID " + id);
+        };
 
         ActiveList.Remove(person);
         RemovedList.Add(person);
+
+        Console.WriteLine("\nPerson removed successfully\n");
     }
 
     static void Recovery(int id)
     {
-        var person = RemovedList.Find(x => x.ID == id);
+        Person person = RemovedList.Find(p => p.ID == id);
         if (person == null)
         {
-            Console.WriteLine("Person not found");
-            return
+            Console.WriteLine("No person founded with ID " + id);
+        };
+
+        RemovedList.Remove(person);
+        ActiveList.Add(person);
+
+        Console.WriteLine("\nPerson recovered successfully\n");
+
+    }
+
+    static void List()
+    {
+        Console.WriteLine("\nEnter 1 for active list and 2 for removed list: ");
+        int listChoice = Convert.ToInt32(Console.ReadLine());
+
+        if (listChoice == 1)
+        {
+            if (ActiveList.Count == 0)
+            {
+                Console.WriteLine("There is no active user");
+            }
+            else
+            {
+                Console.WriteLine("\nActive List:\nId\tFirst Name\tLast Name");
+                foreach (var person in ActiveList)
+                {
+                    Console.WriteLine("\n" + person.ID + "\t" + person.FirstName + "\t\t" + person.LastName);
+                }
+            }
+        }
+
+        else if (listChoice == 2)
+        {
+            if (RemovedList.Count == 0)
+            {
+                Console.WriteLine("There is no removed user");
+            }
+            else
+            {
+                Console.WriteLine("\nRemoved List:\nId\tFirst Name\tLast Name");
+                foreach (var person in RemovedList)
+                {
+                    Console.WriteLine("\n" + person.ID + "\t" + person.FirstName + "\t\t" + person.LastName);
+                }
+            }
+        }
+
+        else
+        {
+            Console.WriteLine("\nInvalid input. Please enter 1 for active list or 2 for removed list.");
+        }
+    }
+}
