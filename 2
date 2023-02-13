@@ -1,85 +1,89 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-
 public enum Choice
-{
-	Add,
-	Edit,
-	Remove,
-	Recovery,
-	List,
-	Exit
-}
-
-static Dictionary<Choice, int> choicemap = new Dictionary<Choice, int>()
-{
-	{ Choice.Add, 3 },
-	{ Choice.Edit, 4 },
-	{ Choice.Remove, 2 },
-	{ Choice.Recovery, 2 },
-	{ Choice.List, 1 },
-	{ Choice.Exit, 1 }
-};
-
-public record Person(int ID, string FirstName, string LastName);
-
-static int ID = 1;
-static List<Person> ActiveList = new List<Person>();
-static List<Person> RemovedList= new List<Person>();
-
-public static void Main(string[] args)
-{
-
-	while (true)
 	{
-		Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, Recovery, List, Exit): ");
-		string input = Console.ReadLine();
-		string[] inputs = input.Split(' ');
-		Choice choice;
+		Add,
+		Edit,
+		Remove,
+		Recovery,
+		List,
+		Exit
+	}
 
-		if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
+	static Dictionary<Choice, int> choicemap = new Dictionary<Choice, int>()
+	{
+		{ Choice.Add, 3 },
+		{ Choice.Edit, 4 },
+		{ Choice.Remove, 2 },
+		{ Choice.Recovery, 2 },
+		{ Choice.List, 1 },
+		{ Choice.Exit, 1 }
+	};
+
+	public record Person(int ID, string FirstName, string LastName);
+
+	static int ID = 1;
+	static List<Person> ActiveList = new List<Person>();
+	static List<Person> RemovedList= new List<Person>();
+
+	public static void Main(string[] args)
+	{
+
+		while (true)
 		{
-			Console.WriteLine("Invalid choice. Please enter a valid choice.");
-			continue;
-		}
+			Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, Recovery, List, Exit): ");
+			string input = Console.ReadLine();
+			string[] inputs = input.Split(' ');
+			Choice choice;
 
-		else if (inputs.Length != choicemap[choice])
-		{
-			Console.WriteLine("Invalid Input.");
-		}
-
-		else
-		{
-
-			switch (choice)
+			if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
 			{
-				case Choice.Add:
-					Add(inputs[1], inputs[2]);
-					break;
-				case Choice.Edit:
-					Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
-					break;
-				case Choice.Remove:
-					Remove(Convert.ToInt32(inputs[1]));
-					break;
-				case Choice.Recovery:
-					Recovery(Convert.ToInt32(inputs[1]));
-					break;
-				case Choice.List:
-					List();
-					break;
-				case Choice.Exit:
-					string json = JsonSerializer.Serialize(ActiveList);
-					Console.WriteLine(json);
-					List<Person> deserializedList = JsonSerializer.Deserialize<List<Person>>(json);
-					foreach (Person person in deserializedList)
-					{
-						Console.WriteLine(person);
-					}
+				Console.WriteLine("Invalid choice. Please enter a valid choice.");
+				continue;
+			}
 
-					return;
+			else if (inputs.Length != choicemap[choice])
+			{
+				Console.WriteLine("Invalid Input.");
+			}
+
+			else
+			{
+
+				switch (choice)
+				{
+					case Choice.Add:
+						Add(inputs[1], inputs[2]);
+						break;
+					case Choice.Edit:
+						Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
+						break;
+					case Choice.Remove:
+						Remove(Convert.ToInt32(inputs[1]));
+						break;
+					case Choice.Recovery:
+						Recovery(Convert.ToInt32(inputs[1]));
+						break;
+					case Choice.List:
+						List();
+						break;
+					case Choice.Exit:
+						string json = JsonSerializer.Serialize(ActiveList);
+                        Console.WriteLine("\n" + json);
+                        List<Person> deserializedList = JsonSerializer.Deserialize<List<Person>>(json);
+                        foreach (Person person in deserializedList)
+                        {
+                            Console.WriteLine(person);
+                        }
+
+                        string json1 = JsonSerializer.Serialize(RemovedList);
+                        Console.WriteLine("\n" + json);
+                        List<Person> deserializedList1 = JsonSerializer.Deserialize<List<Person>>(json1);
+                        foreach (Person person in deserializedList)
+                        {
+                            Console.WriteLine(person);
+                        }
+
+                        return;
+				}
 			}
 		}
 	}
-}
