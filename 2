@@ -1,6 +1,4 @@
-using System.Text;
 using System.Text.Json;
-using static MainClass;
 
 class MainClass
 {
@@ -35,7 +33,6 @@ class MainClass
         using (FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate))
         {
             JsonSerializer.SerializeAsync(fs, list).GetAwaiter().GetResult();
-            Console.WriteLine("Data has been saved to file");
         }
     }
 
@@ -52,6 +49,8 @@ class MainClass
         }
     }
 
+
+    
 
 public static void Main(string[] args)
     {
