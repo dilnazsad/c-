@@ -1,24 +1,8 @@
-static List<Person> Load(string fileName)
+static void Add(string firstName, string lastName)
 {
-    if (!File.Exists(fileName))
-    {
-        return null;
-    }
+    int nextID = Math.Max(ActiveList.Concat(RemovedList).Max(p => p.ID), ID) + 1;
+    Person user = new Person(nextID, firstName, lastName);
+    ActiveList.Add(user);
 
-    using (FileStream fs = File.OpenRead(fileName))
-    {
-        var activeList = JsonSerializer.DeserializeAsync<List<Person>>(fs).GetAwaiter().GetResult();
-
-        int maxID = 0;
-        foreach (var person in activeList)
-        {
-            if (person.ID > maxID)
-            {
-                maxID = person.ID;
-            }
-        }
-
-        ID = maxID + 1;
-        return activeList;
-    }
+    Console.WriteLine("\nPerson added successfully\n");
 }
