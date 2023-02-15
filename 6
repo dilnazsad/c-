@@ -120,8 +120,9 @@ class MainClass
 
     static void Add(string firstName, string lastName)
     {
-        Person user = new Person(ID++, firstName, lastName);
+        Person user = new Person(ID, firstName, lastName);
         ActiveList.Add(user);
+        ID++;
 
         Console.WriteLine("\nPerson added successfully\n");
     }
