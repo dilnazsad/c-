@@ -36,30 +36,31 @@ class MainClass
         }
     }
 
-    static List<Person> Load(string fileName)
+  static List<Person> Load(string fileName)
+{
+    if (!File.Exists(fileName))
     {
-        if (!File.Exists(fileName))
-        {
-            return null;
-        }
-
-        using (FileStream fs = File.OpenRead(fileName))
-        {
-            var activeList = JsonSerializer.DeserializeAsync<List<Person>>(fs).GetAwaiter().GetResult();
-
-            int maxID = 0;
-            foreach (var person in activeList)
-            {
-                if (person.ID > maxID)
-                {
-                    maxID = person.ID;
-                }
-            }
-
-            ID = maxID + 1;
-            return activeList;
-        }
+        return null;
     }
+
+    using (FileStream fs = File.OpenRead(fileName))
+    {
+        var activeList = JsonSerializer.DeserializeAsync<List<Person>>(fs).GetAwaiter().GetResult();
+
+        int maxID = 0;
+        foreach (var person in activeList.Concat(RemovedList))
+        {
+            if (person.ID > maxID)
+            {
+                maxID = person.ID;
+            }
+        }
+
+        ID = maxID + 1;
+        return activeList;
+    }
+}
+
 
 
 
