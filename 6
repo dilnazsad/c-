@@ -74,7 +74,7 @@ class MainClass
         {
             Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, Recovery, List, Exit): ");
             string input = Console.ReadLine();
-            string[] inputs = input.Split(' ');
+            string[] inputs = input.Split();
             Choice choice;
 
             if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
