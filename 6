@@ -48,7 +48,7 @@ class MainClass
             var activeList = JsonSerializer.DeserializeAsync<List<Person>>(fs).GetAwaiter().GetResult();
 
             int maxID = 0;
-            foreach (var person in activeList)
+            foreach (var person in activeList.Concat(RemovedList))
             {
                 if (person.ID > maxID)
                 {
@@ -60,6 +60,7 @@ class MainClass
             return activeList;
         }
     }
+
 
 
 
