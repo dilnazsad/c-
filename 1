@@ -1,78 +1,24 @@
-public enum Choice
-	{
-		Add,
-		Edit,
-		Remove,
-		Recovery,
-		List,
-		Exit
-	}
+static List<Person> Load(string fileName)
+{
+    if (!File.Exists(fileName))
+    {
+        return null;
+    }
 
-	static Dictionary<Choice, int> choicemap = new Dictionary<Choice, int>()
-	{
-		{ Choice.Add, 3 },
-		{ Choice.Edit, 4 },
-		{ Choice.Remove, 2 },
-		{ Choice.Recovery, 2 },
-		{ Choice.List, 1 },
-		{ Choice.Exit, 1 }
-	};
+    using (FileStream fs = File.OpenRead(fileName))
+    {
+        var activeList = JsonSerializer.DeserializeAsync<List<Person>>(fs).GetAwaiter().GetResult();
 
-	public record Person(int ID, string FirstName, string LastName);
+        int maxID = 0;
+        foreach (var person in activeList)
+        {
+            if (person.ID > maxID)
+            {
+                maxID = person.ID;
+            }
+        }
 
-	static int ID = 1;
-	static List<Person> ActiveList = new List<Person>();
-	static List<Person> RemovedList= new List<Person>();
-
-	public static void Main(string[] args)
-	{
-
-		while (true)
-		{
-			Console.WriteLine("\nEnter the action you want to perform (Add, Edit, Remove, Recovery, List, Exit): ");
-			string input = Console.ReadLine();
-			string[] inputs = input.Split(' ');
-			Choice choice;
-
-			if (!Enum.TryParse(inputs[0], ignoreCase: true, out choice))
-			{
-				Console.WriteLine("Invalid choice. Please enter a valid choice.");
-				continue;
-			}
-
-			else if (inputs.Length != choicemap[choice])
-			{
-				Console.WriteLine("Invalid Input.");
-			}
-
-			else
-			{
-
-				switch (choice)
-				{
-					case Choice.Add:
-						Add(inputs[1], inputs[2]);
-						break;
-					case Choice.Edit:
-						Edit(Convert.ToInt32(inputs[1]), inputs[2], inputs[3]);
-						break;
-					case Choice.Remove:
-						Remove(Convert.ToInt32(inputs[1]));
-						break;
-					case Choice.Recovery:
-						Recovery(Convert.ToInt32(inputs[1]));
-						break;
-					case Choice.List:
-						List();
-						break;
-					case Choice.Exit:
-						string json = JsonSerializer.Serialize<Person>(json);
-						Console.WriteLine(json);
-						Person person = JsonSerializer.Deserialize<Person>(json);
-						Console.WriteLine(person);
-
-                        return;
-				}
-			}
-		}
-	}
+        ID = maxID + 1;
+        return activeList;
+    }
+}
