@@ -1,30 +1,4 @@
-using System.Text;
 using System.Text.Json;
-using static MainClass;
-
-static void SaveAsJson(string fileName, List<Person> list)
-{
-    using (FileStream fs = File.Create(fileName))
-    {
-        byte[] data = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(list));
-        fs.Write(data, 0, data.Length);
-    }
-}
-static List<Person> LoadFromJson(string fileName)
-{
-    if (!File.Exists(fileName))
-    {
-        return null;
-    }
-
-    using (FileStream fs = File.OpenRead(fileName))
-    {
-        byte[] data = new byte[fs.Length];
-        fs.Read(data, 0, data.Length);
-        return JsonSerializer.Deserialize<List<Person>>(Encoding.UTF8.GetString(data));
-    }
-}
-
 
 class MainClass
 {
@@ -52,12 +26,48 @@ class MainClass
 
     static int ID = 1;
     static List<Person> ActiveList = new List<Person>();
-    static List<Person> RemovedList= new List<Person>();
+    static List<Person> RemovedList = new List<Person>();
+
+    static void Save(string fileName, List<Person> list)
+    {
+        using (FileStream fs = new FileStream(fileName, FileMode.Create))
+        {
+            JsonSerializer.SerializeAsync(fs, list).GetAwaiter().GetResult();
+        }
+    }
+
+    static List<Person> Load(string fileName)
+    {
+        if (!File.Exists(fileName))
+        {
+            return null;
+        }
+
+        using (FileStream fs = File.OpenRead(fileName))
+        {
+            var activeList = JsonSerializer.DeserializeAsync<List<Person>>(fs).GetAwaiter().GetResult();
+
+            int maxID = 0;
+            foreach (var person in activeList)
+            {
+                if (person.ID > maxID)
+                {
+                    maxID = person.ID;
+                }
+            }
+
+            ID = maxID + 1;
+            return activeList;
+        }
+    }
+
+
+
 
     public static void Main(string[] args)
     {
-        ActiveList = LoadFromJson("active.json") ?? new List<Person>();
-        RemovedList = LoadFromJson("removed.json") ?? new List<Person>();
+        ActiveList = Load("active.json") ?? new List<Person>();
+        RemovedList = Load("removed.json") ?? new List<Person>();
 
         while (true)
         {
@@ -74,7 +84,7 @@ class MainClass
 
             else if (inputs.Length != choicemap[choice])
             {
-                Console.WriteLine("Invalid Input.");
+                Console.WriteLine("Invalid input.");
             }
 
             else
@@ -98,17 +108,20 @@ class MainClass
                         List();
                         break;
                     case Choice.Exit:
-                        SaveAsJson("active.json", ActiveList);
-                        SaveAsJson("removed.json", RemovedList);
-                        return; ;
+                        Save("active.json", ActiveList);
+                        Save("removed.json", RemovedList);
+                        return;
                 }
             }
         }
     }
 
+
     static void Add(string firstName, string lastName)
     {
-        Person user = new Person(ID++, firstName, lastName);
+
+        int nextID = Math.Max(ActiveList.Concat(RemovedList).Max(p => p.ID), ID) + 1;
+        Person user = new Person(nextID, firstName, lastName);
         ActiveList.Add(user);
 
         Console.WriteLine("\nPerson added successfully\n");
@@ -144,7 +157,7 @@ class MainClass
         };
 
         ActiveList.Remove(person);
-        RemovedList.Add(person);    
+        RemovedList.Add(person);
 
         Console.WriteLine("\nPerson removed successfully\n");
     }
