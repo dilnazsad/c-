@@ -1,0 +1,114 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Web.Http;
+using Newtonsoft.Json;
+
+public class Person
+{
+    public int ID { get; set; }
+    public string Name { get; set; }
+}
+
+public class PersonController : ApiController
+{
+    private const string ActiveListFile = "active.json";
+    private const string RemovedListFile = "removed.json";
+
+    // Получение всех активных записей
+    public IEnumerable<Person> GetActiveList()
+    {
+        return GetListFromFile<List<Person>>(ActiveListFile) ?? new List<Person>();
+    }
+
+    // Получение всех удаленных записей
+    public IEnumerable<Person> GetRemovedList()
+    {
+        return GetListFromFile<List<Person>>(RemovedListFile) ?? new List<Person>();
+    }
+
+    // Добавление новой записи в активные
+    public IHttpActionResult AddPerson(Person person)
+    {
+        var activeList = GetListFromFile<List<Person>>(ActiveListFile) ?? new List<Person>();
+        person.ID = activeList.Count > 0 ? activeList.Max(p => p.ID) + 1 : 1;
+        activeList.Add(person);
+        SaveListToFile(activeList, ActiveListFile);
+        return Ok(person);
+    }
+
+    // Редактирование существующей записи в активных
+    public IHttpActionResult EditPerson(int id, Person person)
+    {
+        var activeList = GetListFromFile<List<Person>>(ActiveListFile) ?? new List<Person>();
+        var existingPerson = activeList.FirstOrDefault(p => p.ID == id);
+        if (existingPerson == null)
+        {
+            return NotFound();
+        }
+        existingPerson.Name = person.Name;
+        SaveListToFile(activeList, ActiveListFile);
+        return Ok(existingPerson);
+    }
+
+    // Перемещение записи из активных в удаленные
+    public IHttpActionResult RemovePerson(int id)
+    {
+        var activeList = GetListFromFile<List<Person>>(ActiveListFile) ?? new List<Person>();
+        var existingPerson = activeList.FirstOrDefault(p => p.ID == id);
+        if (existingPerson == null)
+        {
+            return NotFound();
+        }
+        activeList.Remove(existingPerson);
+        var removedList = GetListFromFile<List<Person>>(RemovedListFile) ?? new List<Person>();
+        removedList.Add(existingPerson);
+        SaveListToFile(activeList, ActiveListFile);
+        SaveListToFile(removedList, RemovedListFile);
+        return Ok(existingPerson);
+    }
+
+    // Восстановление записи из удаленных в активные
+    public IHttpActionResult RecoverPerson(int id)
+    {
+        var removedList = GetListFromFile<List<Person>>(RemovedListFile) ?? new List<Person>();
+        var existingPerson = removedList.FirstOrDefault(p => p.ID == id);
+        if (existingPerson == null)
+        {
+            return NotFound();
+        }
+        removedList.Remove(existingPerson);
+        var activeList = GetListFromFile<List<Person>>(ActiveListFile) ?? new List<Person>();
+        activeList.Add(existingPerson);
+        SaveListToFile(activeList, ActiveListFile);
+        SaveListToFile(removedList, RemovedListFile);
+        return Ok(existingPerson);
+    }
+
+    // Получение всех записей (активных и удаленных)
+    public IEnumerable<Person> ListAll()
+    {
+        var activeList = GetListFromFile<List<Person>>(ActiveListFile) ?? new List<Person>();
+        var removedList = GetListFromFile<List<Person>>(RemovedListFile) ?? new List<Person>();
+        return activeList.Concat(removedList);
+    }
+
+    private void SaveListToFile<T>(T list, string fileName)
+{
+var json = JsonConvert.SerializeObject(list);
+File.WriteAllText(fileName, json);
+}
+
+private T GetListFromFile<T>(string fileName)
+{
+if (!File.Exists(fileName))
+{
+return default(T);
+}
+var json = File.ReadAllText(fileName);
+return JsonConvert.DeserializeObject<T>(json);
+}
+
+}
+       
