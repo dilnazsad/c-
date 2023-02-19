@@ -1,0 +1,96 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+var builder = WebApplication.CreateBuilder();
+var app = builder.Build();
+
+// create a list of persons to store data
+var persons = new List<Person>();
+
+app.MapGet("/api/users", async (context) =>
+{
+    await context.Response.WriteAsJsonAsync(persons);
+});
+
+app.MapGet("/api/users/{id}", async (context) =>
+{
+    // get the id parameter from the route
+    if (int.TryParse(context.Request.RouteValues["id"].ToString(), out int id))
+    {
+        // find the person with the given id in the list
+        var person = persons.FirstOrDefault(p => p.Id == id);
+        if (person != null)
+        {
+            await context.Response.WriteAsJsonAsync(person);
+            return;
+        }
+    }
+    // if no person is found, return a 404 response
+    context.Response.StatusCode = 404;
+});
+
+app.MapPost("/api/users", async (context) =>
+{
+    // read the person data from the request body
+    var person = await context.Request.ReadFromJsonAsync<Person>();
+
+    // generate a unique id for the new person
+    person.Id = persons.Count > 0 ? persons.Max(p => p.Id) + 1 : 1;
+
+    // add the new person to the list
+    persons.Add(person);
+
+    // return the newly created person with a 201 Created status code
+    context.Response.StatusCode = 201;
+    await context.Response.WriteAsJsonAsync(person);
+});
+
+app.MapPut("/api/users/{id}", async (context) =>
+{
+    // get the id parameter from the route
+    if (int.TryParse(context.Request.RouteValues["id"].ToString(), out int id))
+    {
+        // find the person with the given id in the list
+        var person = persons.FirstOrDefault(p => p.Id == id);
+        if (person != null)
+        {
+            // read the updated person data from the request body
+            var updatedPerson = await context.Request.ReadFromJsonAsync<Person>();
+
+            // update the person data
+            person.Name = updatedPerson.Name;
+            person.Age = updatedPerson.Age;
+
+            // return the updated person with a 200 OK status code
+            await context.Response.WriteAsJsonAsync(person);
+            return;
+        }
+    }
+    // if no person is found, return a 404 response
+    context.Response.StatusCode = 404;
+});
+
+app.MapDelete("/api/users/{id}", async (context) =>
+{
+    // get the id parameter from the route
+    if (int.TryParse(context.Request.RouteValues["id"].ToString(), out int id))
+    {
+        // find the person with the given id in the list
+        var person = persons.FirstOrDefault(p => p.Id == id);
+        if (person != null)
+        {
+            // remove the person from the list
+            persons.Remove(person);
+
+            // return a 204 No Content response
+            context.Response.StatusCode = 204;
+            return;
+        }
+    }
+    // if no person is found, return a 404 response
+    context.Response.StatusCode = 404;
+});
+
+app.Run();
