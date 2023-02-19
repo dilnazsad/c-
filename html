@@ -1,143 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8">
-	<title>C# Program CRUD with JSON Files in API</title>
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script>
-		var apiUrl = "https://example.com/api/persons"; // Change this to your API endpoint URL
+<form action="/edit" method="POST">
+  <label for="id">ID:</label>
+  <input type="text" id="id" name="id"><br>
 
-		function listPersons() {
-			$.getJSON(apiUrl + "/active", function(data) {
-				$("#personsTable tbody").empty();
-				$.each(data, function(index, person) {
-					var row = "<tr><td>" + person.id + "</td><td>" + person.name + "</td><td><button onclick='editPerson(" + person.id + ")'>Edit</button> <button onclick='removePerson(" + person.id + ")'>Remove</button></td></tr>";
-					$("#personsTable tbody").append(row);
-				});
-			});
-		}
+  <label for="name">Name:</label>
+  <input type="text" id="name" name="name"><br>
 
-		function addPerson() {
-			var name = $("#name").val();
-			$.ajax({
-				url: apiUrl,
-				type: "POST",
-				data: JSON.stringify({name: name}),
-				contentType: "application/json",
-				success: function(result) {
-					listPersons();
-					$("#name").val("");
-				}
-			});
-		}
+  <label for="status">Status:</label>
+  <select id="status" name="status">
+    <option value="active">Active</option>
+    <option value="inactive">Inactive</option>
+  </select><br>
 
-		function editPerson(id) {
-			$.getJSON(apiUrl + "/active/" + id, function(person) {
-				$("#id").val(person.id);
-				$("#name").val(person.name);
-				$("#addButton").hide();
-				$("#updateButton").show();
-			});
-		}
+  <button type="submit">Edit</button>
+</form>
 
-		function updatePerson() {
-			var id = $("#id").val();
-			var name = $("#name").val();
-			$.ajax({
-				url: apiUrl + "/" + id,
-				type: "PUT",
-				data: JSON.stringify({name: name}),
-				contentType: "application/json",
-				success: function(result) {
-					listPersons();
-					$("#id").val("");
-					$("#name").val("");
-					$("#updateButton").hide();
-					$("#addButton").show();
-				}
-			});
-		}
+<form action="/remove" method="POST">
+  <label for="id">ID:</label>
+  <input type="text" id="id" name="id"><br>
 
-		function removePerson(id) {
-			$.ajax({
-				url: apiUrl + "/" + id,
-				type: "DELETE",
-				success: function(result) {
-					listPersons();
-				}
-			});
-		}
+  <button type="submit">Remove</button>
+</form>
 
-		function recoverPerson(id) {
-			$.ajax({
-				url: apiUrl + "/removed/" + id,
-				type: "PUT",
-				data: JSON.stringify({}),
-				contentType: "application/json",
-				success: function(result) {
-					listPersons();
-				}
-			});
-		}
+<form action="/recover" method="POST">
+  <label for="id">ID:</label>
+  <input type="text" id="id" name="id"><br>
 
-		$(document).ready(function() {
-			listPersons();
-			$("#addButton").click(addPerson);
-			$("#updateButton").click(updatePerson);
-		});
-	</script>
-</head>
-<body>
-	<h1>C# Program CRUD with JSON Files in API</h1>
-
-	<h2>Add/Edit Person</h2>
-	<form>
-		<input type="hidden" id="id">
-		<label>Name: <input type="text" id="name"></label>
-		<button type="button" id="addButton">Add</button>
-		<button type="button" id="updateButton" style="display: none;">Update</button>
-	</form>
-
-	<h2>Persons</h2>
-	<table
-	<thead>
-		<tr>
-			<th>ID</th>
-			<th>Name</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody id="personsTable">
-	</tbody>
-</table>
-
-<h2>Removed Persons</h2>
-<table>
-	<thead>
-		<tr>
-			<th>ID</th>
-			<th>Name</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody id="removedPersonsTable">
-	</tbody>
-</table>
-
-<script>
-	function listRemovedPersons() {
-		$.getJSON(apiUrl + "/removed", function(data) {
-			$("#removedPersonsTable").empty();
-			$.each(data, function(index, person) {
-				var row = "<tr><td>" + person.id + "</td><td>" + person.name + "</td><td><button onclick='recoverPerson(" + person.id + ")'>Recover</button></td></tr>";
-				$("#removedPersonsTable").append(row);
-			});
-		});
-	}
-
-	$(document).ready(function() {
-		listRemovedPersons();
-	});
-</script>
-</body>
-</html>
+  <button type="submit">Recover</button>
+</form>
