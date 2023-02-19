@@ -1,84 +1,85 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
+Add
 
-var builder = WebApplication.CreateBuilder();
-var app = builder.Build();
-
-app.Run(async (context) =>
+app.Use(async (context, next) =>
 {
-    var response = context.Response;
-    var request = context.Request;
-    if (request.Path == "/api/user")
+    if (context.Request.Path == "/api/user/add" && context.Request.HasJsonContentType())
     {
-        var responseText = "Некорректные данные";   // содержание сообщения по умолчанию
+        var jsonoptions = new JsonSerializerOptions();
+        jsonoptions.Converters.Add(new PersonConverter());
 
-        if (request.HasJsonContentType())
+        var person = await context.Request.ReadFromJsonAsync<Person>(jsonoptions);
+        if (person != null)
         {
-            // определяем параметры сериализации/десериализации
-            var jsonoptions = new JsonSerializerOptions();
-            // добавляем конвертер кода json в объект типа Person
-            jsonoptions.Converters.Add(new PersonConverter());
-            // десериализуем данные с помощью конвертера PersonConverter
-            var person = await request.ReadFromJsonAsync<Person>(jsonoptions);
-            if (person != null)
-                responseText = $"Name: {person.Name}  Age: {person.Age}";
+            // Add the person to a list
+            persons.Add(person);
+
+            // Return a success message
+            var responseText = $"Added {person.Name} to the list";
+            await context.Response.WriteAsJsonAsync(new { text = responseText });
+            return;
         }
-        await response.WriteAsJsonAsync(new { text = responseText });
     }
-    else
-    {
-        response.ContentType = "text/html; charset=utf-8";
-        await response.SendFileAsync("index.html");
-    }
+    await next();
 });
 
-app.Run();
 
-public record Person(string Name, int Age);
-public class PersonConverter : JsonConverter<Person>
+Remove
+
+app.Use(async (context, next) =>
 {
-    public override Person Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    if (context.Request.Path == "/api/user/remove" && context.Request.Query.ContainsKey("name"))
     {
-        var personName = "Undefined";
-        var personAge = 0;
-        while (reader.Read())
+        var name = context.Request.Query["name"].ToString();
+
+        // Remove the person from the list
+        var removed = persons.RemoveAll(p => p.Name == name);
+
+        // Return a success or error message
+        var responseText = removed > 0 ? $"Removed {name} from the list" : $"Could not find {name} in the list";
+        await context.Response.WriteAsJsonAsync(new { text = responseText });
+        return;
+    }
+    await next();
+});
+
+
+Edit
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/api/user/edit" && context.Request.Query.ContainsKey("name") && context.Request.HasJsonContentType())
+    {
+        var name = context.Request.Query["name"].ToString();
+        var jsonoptions = new JsonSerializerOptions();
+        jsonoptions.Converters.Add(new PersonConverter());
+
+        var person = await context.Request.ReadFromJsonAsync<Person>(jsonoptions);
+        if (person != null)
         {
-            if (reader.TokenType == JsonTokenType.PropertyName)
+            // Find the person in the list and update their values
+            var edited = persons.FirstOrDefault(p => p.Name == name);
+            if (edited != null)
             {
-                var propertyName = reader.GetString();
-                reader.Read();
-                switch (propertyName?.ToLower())
-                {
-                    // если свойство age и оно содержит число
-                    case "age" when reader.TokenType == JsonTokenType.Number:
-                        personAge = reader.GetInt32();  // считываем число из json
-                        break;
-                    // если свойство age и оно содержит строку
-                    case "age" when reader.TokenType == JsonTokenType.String:
-                        string? stringValue = reader.GetString();
-                        // пытаемся конвертировать строку в число
-                        if (int.TryParse(stringValue, out int value))
-                        {
-                            personAge = value;
-                        }
-                        break;
-                    case "name":    // если свойство Name/name
-                        string? name = reader.GetString();
-                        if (name != null)
-                            personName = name;
-                        break;
-                }
+                edited.Name = person.Name;
+                edited.Age = person.Age;
+                var responseText = $"Updated {name} in the list";
+                await context.Response.WriteAsJsonAsync(new { text = responseText });
+                return;
             }
         }
-        return new Person(personName, personAge);
     }
-    // сериализуем объект Person в json
-    public override void Write(Utf8JsonWriter writer, Person person, JsonSerializerOptions options)
-    {
-        writer.WriteStartObject();
-        writer.WriteString("name", person.Name);
-        writer.WriteNumber("age", person.Age);
+    await next();
+});
 
-        writer.WriteEndObject();
+
+List
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/api/user/list")
+    {
+        // Return a JSON array of all persons
+        await context.Response.WriteAsJsonAsync(persons);
+        return;
     }
-}
+   
