@@ -1,10 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+
+var builder = WebApplication.CreateBuilder();
+var app = builder.Build();
 
 // начальные данные
- int ID = 1;
- List<Person> ActiveList = new List<Person>();
- List<Person> RemovedList = new List<Person>();
+int ID = 1;
+List<Person> ActiveList = new List<Person>();
+List<Person> RemovedList = new List<Person>();
 
 static void Save(string fileName, List<Person> list)
 {
@@ -39,21 +50,16 @@ static List<Person> Load(string fileName)
     }
 }
 
-var builder = WebApplication.CreateBuilder();
-var app = builder.Build();
-
 app.Run(async (context) =>
 {
     var response = context.Response;
     var request = context.Request;
     var path = request.Path;
-    //string expressionForNumber = "^/api/users/([0-9]+)$";   // если id представляет число
 
-    // 2e752824-1657-4c7f-844b-6ec2e168e99c
     string expressionForGuid = @"^/api/users/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$";
     if (path == "/api/users" && request.Method == "GET")
     {
-        await GetAllPeople(response);
+        await GetAllActivePeople(response);
     }
     else if (Regex.IsMatch(path, expressionForGuid) && request.Method == "GET")
     {
@@ -83,43 +89,21 @@ app.Run(async (context) =>
 
 app.Run();
 
-// получение всех пользователей
-async Task GetAllPeople(HttpResponse response)
-{
-    await response.WriteAsJsonAsync(users);
-}
-
+// получение всех активных пользователей
 async Task GetAllActivePeople(HttpResponse response)
 {
-    var activeUsers = users.Where(u => !u.IsRemoved).ToList();
+    var activeUsers = ActiveList.Where(u => !u.IsRemoved).ToList();
     await response.WriteAsJsonAsync(activeUsers);
 }
-
 
 // получение одного пользователя по id
 async Task GetPerson(string? id, HttpResponse response)
 {
     // получаем пользователя по id
-    Person? user = users.FirstOrDefault((u) => u.Id == id);
+    Person? user = ActiveList.FirstOrDefault((u) => u.Id == id);
     // если пользователь найден, отправляем его
-    if (user != null)
-        await response.WriteAsJsonAsync(user);
-    // если не найден, отправляем статусный код и сообщение об ошибке
-    else
+    if (user != null && !user.IsRemoved)
     {
-        response.StatusCode = 404;
-        await response.WriteAsJsonAsync(new { message = "Пользователь не найден" });
-    }
-}
-
-async Task DeletePerson(string? id, HttpResponse response)
-{
-    // получаем пользователя по id
-    Person? user = users.FirstOrDefault((u) => u.Id == id);
-    // если пользователь найден, удаляем его
-    if (user != null)
-    {
-        user.IsRemoved = true;
         await response.WriteAsJsonAsync(user);
     }
     // если не найден, отправляем статусный код и сообщение об ошибке
@@ -130,7 +114,7 @@ async Task DeletePerson(string? id, HttpResponse response)
     }
 }
 
-
+// создание нового пользователя
 async Task CreatePerson(HttpResponse response, HttpRequest request)
 {
     try
