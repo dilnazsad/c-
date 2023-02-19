@@ -1,96 +1,84 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder();
 var app = builder.Build();
 
-// create a list of persons to store data
-var persons = new List<Person>();
-
-app.MapGet("/api/users", async (context) =>
+app.Run(async (context) =>
 {
-    await context.Response.WriteAsJsonAsync(persons);
-});
-
-app.MapGet("/api/users/{id}", async (context) =>
-{
-    // get the id parameter from the route
-    if (int.TryParse(context.Request.RouteValues["id"].ToString(), out int id))
+    var response = context.Response;
+    var request = context.Request;
+    if (request.Path == "/api/user")
     {
-        // find the person with the given id in the list
-        var person = persons.FirstOrDefault(p => p.Id == id);
-        if (person != null)
+        var responseText = "Некорректные данные";   // содержание сообщения по умолчанию
+
+        if (request.HasJsonContentType())
         {
-            await context.Response.WriteAsJsonAsync(person);
-            return;
+            // определяем параметры сериализации/десериализации
+            var jsonoptions = new JsonSerializerOptions();
+            // добавляем конвертер кода json в объект типа Person
+            jsonoptions.Converters.Add(new PersonConverter());
+            // десериализуем данные с помощью конвертера PersonConverter
+            var person = await request.ReadFromJsonAsync<Person>(jsonoptions);
+            if (person != null)
+                responseText = $"Name: {person.Name}  Age: {person.Age}";
         }
+        await response.WriteAsJsonAsync(new { text = responseText });
     }
-    // if no person is found, return a 404 response
-    context.Response.StatusCode = 404;
-});
-
-app.MapPost("/api/users", async (context) =>
-{
-    // read the person data from the request body
-    var person = await context.Request.ReadFromJsonAsync<Person>();
-
-    // generate a unique id for the new person
-    person.Id = persons.Count > 0 ? persons.Max(p => p.Id) + 1 : 1;
-
-    // add the new person to the list
-    persons.Add(person);
-
-    // return the newly created person with a 201 Created status code
-    context.Response.StatusCode = 201;
-    await context.Response.WriteAsJsonAsync(person);
-});
-
-app.MapPut("/api/users/{id}", async (context) =>
-{
-    // get the id parameter from the route
-    if (int.TryParse(context.Request.RouteValues["id"].ToString(), out int id))
+    else
     {
-        // find the person with the given id in the list
-        var person = persons.FirstOrDefault(p => p.Id == id);
-        if (person != null)
-        {
-            // read the updated person data from the request body
-            var updatedPerson = await context.Request.ReadFromJsonAsync<Person>();
-
-            // update the person data
-            person.Name = updatedPerson.Name;
-            person.Age = updatedPerson.Age;
-
-            // return the updated person with a 200 OK status code
-            await context.Response.WriteAsJsonAsync(person);
-            return;
-        }
+        response.ContentType = "text/html; charset=utf-8";
+        await response.SendFileAsync("index.html");
     }
-    // if no person is found, return a 404 response
-    context.Response.StatusCode = 404;
-});
-
-app.MapDelete("/api/users/{id}", async (context) =>
-{
-    // get the id parameter from the route
-    if (int.TryParse(context.Request.RouteValues["id"].ToString(), out int id))
-    {
-        // find the person with the given id in the list
-        var person = persons.FirstOrDefault(p => p.Id == id);
-        if (person != null)
-        {
-            // remove the person from the list
-            persons.Remove(person);
-
-            // return a 204 No Content response
-            context.Response.StatusCode = 204;
-            return;
-        }
-    }
-    // if no person is found, return a 404 response
-    context.Response.StatusCode = 404;
 });
 
 app.Run();
+
+public record Person(string Name, int Age);
+public class PersonConverter : JsonConverter<Person>
+{
+    public override Person Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var personName = "Undefined";
+        var personAge = 0;
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.PropertyName)
+            {
+                var propertyName = reader.GetString();
+                reader.Read();
+                switch (propertyName?.ToLower())
+                {
+                    // если свойство age и оно содержит число
+                    case "age" when reader.TokenType == JsonTokenType.Number:
+                        personAge = reader.GetInt32();  // считываем число из json
+                        break;
+                    // если свойство age и оно содержит строку
+                    case "age" when reader.TokenType == JsonTokenType.String:
+                        string? stringValue = reader.GetString();
+                        // пытаемся конвертировать строку в число
+                        if (int.TryParse(stringValue, out int value))
+                        {
+                            personAge = value;
+                        }
+                        break;
+                    case "name":    // если свойство Name/name
+                        string? name = reader.GetString();
+                        if (name != null)
+                            personName = name;
+                        break;
+                }
+            }
+        }
+        return new Person(personName, personAge);
+    }
+    // сериализуем объект Person в json
+    public override void Write(Utf8JsonWriter writer, Person person, JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("name", person.Name);
+        writer.WriteNumber("age", person.Age);
+
+        writer.WriteEndObject();
+    }
+}
